@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Refresh Prioritization: A Client-Grouped Validation Study | Muhammad Ahmed Zia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1F3A5F;
+    --ink: #16181D;
+    --paper: #FAFAF9;
+    --amber: #D9A441;
+    --line: #E4E1D9;
+    --muted: #5F5E5A;
+    --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  h1, h2, h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--navy);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  a { color: var(--navy); }
+  a:hover { color: var(--amber); }
+
+  /* Layout */
+  .shell { display: flex; max-width: 1200px; margin: 0 auto; }
+  nav.toc {
+    width: 220px; flex-shrink: 0; position: sticky; top: 0; height: 100vh;
+    padding: 40px 20px; overflow-y: auto; border-right: 1px solid var(--line);
+  }
+  nav.toc .mark {
+    width: 40px; height: 40px; border-radius: 10px; background: var(--navy);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 24px;
+  }
+  nav.toc .mark span { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--paper); font-size: 16px; }
+  nav.toc a {
+    display: block; font-size: 13px; color: var(--muted); text-decoration: none;
+    padding: 6px 0; border-left: 2px solid transparent; padding-left: 10px; margin-left: -12px;
+  }
+  nav.toc a:hover, nav.toc a.active { color: var(--navy); border-left-color: var(--amber); }
+
+  main { flex: 1; padding: 60px 48px 120px; max-width: 760px; }
+  @media (max-width: 900px) {
+    nav.toc { display: none; }
+    main { padding: 32px 20px 80px; max-width: 100%; }
+  }
+
+  section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  section h2 { font-size: 26px; margin-bottom: 18px; padding-top: 8px; border-top: 1px solid var(--line); padding-top: 24px; }
+  section:first-of-type h2 { border-top: none; padding-top: 0; }
+  h3 { font-size: 18px; margin: 24px 0 10px; }
+  p { margin-bottom: 14px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--navy); }
+  .eyebrow {
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--amber);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; display: block;
+  }
+
+  /* Hero */
+  .hero { padding: 80px 0 40px; position: relative; }
+  .hero h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; margin-bottom: 20px; }
+  .hero .byline { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+  .hero .byline a { color: var(--muted); text-decoration: underline; }
+
+  /* Abstract box */
+  .abstract {
+    background: var(--white); border: 1px solid var(--line); border-radius: 10px;
+    padding: 24px 28px; margin-top: 8px;
+  }
+  .abstract p { font-size: 15px; color: var(--ink); margin-bottom: 0; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  th { font-family: 'Inter', sans-serif; font-weight: 600; color: var(--navy); font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+  tr:last-child td { border-bottom: none; }
+  .highlight-row td { background: rgba(217,164,65,0.08); font-weight: 600; }
+
+  code, .code {
+    font-family: 'SF Mono', 'Consolas', monospace; font-size: 13px;
+    background: var(--white); border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px;
+  }
+
+  .callout {
+    border-left: 3px solid var(--amber); background: var(--white); padding: 16px 20px;
+    border-radius: 0 8px 8px 0; margin: 20px 0; font-size: 14.5px;
+  }
+  .callout strong { display: block; margin-bottom: 4px; }
+
+  .warning {
+    border-left: 3px solid var(--navy); background: rgba(31,58,95,0.05); padding: 16px 20px;
+    border-radius: 0 8px 8px 0; margin: 20px 0; font-size: 14.5px;
+  }
+
+  /* Diagram — the signature element */
+  .diagram-wrap { margin: 28px 0; }
+  .diagram-wrap svg { width: 100%; height: auto; }
+  .diagram-caption { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; }
+
+  /* Chart */
+  .chart-wrap { margin: 24px 0; }
+  .chart-wrap svg { width: 100%; height: auto; }
+
+  /* Recs */
+  .rec {
+    display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line);
+  }
+  .rec .num {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--amber);
+    font-size: 20px; flex-shrink: 0; width: 28px;
+  }
+  .rec-body h3 { margin: 0 0 4px; font-size: 16px; }
+  .rec-body p { margin-bottom: 4px; font-size: 14.5px; }
+  .rec-tag { font-size: 12px; color: var(--muted); }
+
+  footer {
+    border-top: 1px solid var(--line); margin-top: 60px; padding-top: 28px;
+    font-size: 13px; color: var(--muted);
+  }
+  footer a { color: var(--navy); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="toc">
+    <div class="mark"><span>AZ</span></div>
+    <a href="#abstract">Abstract</a>
+    <a href="#intro">Introduction</a>
+    <a href="#data">Data</a>
+    <a href="#methodology">Methodology</a>
+    <a href="#results">Results</a>
+    <a href="#limitations">Limitations</a>
+    <a href="#recommendations">Recommendations</a>
+    <a href="#reproducibility">Reproducibility</a>
+    <a href="#acknowledgments">Acknowledgments</a>
+  </nav>
+
+  <main>
+    <div class="hero" id="top">
+      <span class="eyebrow">Research Paper &middot; FlyRank ML Internship Capstone</span>
+      <h1>Content Refresh Prioritization: A Client-Grouped Validation Study on 79M Rows of Production Search Data</h1>
+      <p class="byline">Muhammad Ahmed Zia &middot; BS Computer Science, COMSATS University Islamabad &middot;
+        <a href="https://github.com/Muhammad-Ahmed-Zia/flyrank-ml-internship" target="_blank">Repository</a> &middot;
+        <a href="mailto:mahmedzia112@gmail.com">Contact</a>
+      </p>
+    </div>
+
+    <section id="abstract">
+      <h2>Abstract</h2>
+      <div class="abstract">
+        <p>
+        Which pages should a content team review first, given a limited weekly capacity and thousands of candidates?
+        This paper builds and validates a ranked content-review queue using FlyRank's internship-warehouse dataset,
+        a 78.8-million-row daily production search fact table spanning 70 clients.
+        A Random Forest classifier, trained on first-half-of-month observable signals to predict within-month
+        visibility decline, is compared against a transparent hand-written baseline rule under a client-grouped
+        validation split. The model shows a measured, modest improvement over the baseline (Precision@50 of 0.740
+        versus 0.560) on held-out clients never seen during training. A parallel audit shows that validating this
+        same model under a naive, ungrouped split would have overstated Precision@50 by 0.200 &mdash; a finding this
+        paper treats as being as important as the headline result itself. The output is framed throughout as
+        decision-support for human review, not as an autonomous or causal claim about why any individual page is
+        declining.
+        </p>
+      </div>
+    </section>
+
+    <section id="intro">
+      <h2>Introduction &amp; Problem Statement</h2>
+      <p>
+      Content teams at scale face a simple, unglamorous problem: given thousands of published pages and a small
+      review team, which pages deserve a human's limited attention first? A naive answer &mdash; "review whatever
+      looks stale" &mdash; ignores real signal sitting in observable search behavior: visibility, click-through
+      rate relative to ranking position, and how those change over time. FlyRank's product already encodes rules
+      like this in its own optimization flags, but those flags are deliberately not shipped in the internship
+      dataset, so this project builds and validates a ranking approach from raw observable signals rather than
+      reproducing an existing rule.
+      </p>
+      <p>
+      This paper follows FlyRank's own <strong>Lane 2: Refresh / Content Opportunity Scoring</strong> &mdash; producing
+      a ranked review queue with reason codes, validated against a transparent baseline on the same held-out data,
+      with an explicit accounting of where the validation itself could be misleading.
+      </p>
+    </section>
+
+    <section id="data">
+      <h2>Data</h2>
+      <p>
+      This study uses the <strong>FlyRank/internship-warehouse</strong> release on Hugging Face
+      (build id <code>flyrank_pseudonymized_warehouse_release_v20260703</code>), specifically the
+      <code>fact_content_daily_performance</code> table (78,835,655 rows, daily &times; client &times; content grain)
+      and <code>dim_content</code> (519,606 pseudonymized content items, used only for <code>content_created_date</code>).
+      </p>
+      <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>Analysis window</td><td>March 2026 (<code>month=2026-03</code>), a mid-panel month</td></tr>
+        <tr><td>Rows in window (pre-aggregation)</td><td>9,841,378</td></tr>
+        <tr><td>Unique content items analyzed (post-aggregation, post leak-fix)</td><td>151,980</td></tr>
+        <tr><td>Clients represented</td><td>44 (33 train / 11 test, client-grouped, zero overlap)</td></tr>
+        <tr><td>Full warehouse history</td><td>2025-10-13 to 2026-03-25</td></tr>
+      </table>
+      <p><strong>Why a mid-panel month, not the most recent month:</strong> the dataset's final month is a sealed
+      test month by design &mdash; it is the natural outcome window for any past-to-future label, and using it to
+      develop label logic would let the future leak into "now." March 2026 was chosen specifically to avoid this.</p>
+      <p><strong>Excluded, by design, and why (public-safe):</strong></p>
+      <ul>
+        <li>FlyRank's own product decision flags (<code>health_score</code>, <code>priority_score</code>,
+        <code>action_type</code>) &mdash; not shipped in the release, specifically to prevent a model from simply
+        learning to reproduce an existing rule rather than discovering signal from evidence.</li>
+        <li>Raw client names, domains, URLs, queries, and titles &mdash; scrambled before release; this paper never
+        attempts to reconstruct them and reports only pseudonymized hash IDs and aggregate metrics.</li>
+        <li>The <code>_sample</code> table (the sealed final month) &mdash; reserved as an unseen test set, never
+        used for label design or feature development.</li>
+      </ul>
+    </section>
+
+    <section id="methodology">
+      <h2>Methodology</h2>
+
+      <h3>Unit of analysis and label</h3>
+      <p>
+      One row = one content item (<code>content_hash_id</code>), summarized over the analysis month.
+      The label, <code>is_declining</code>, is a proxy: 1 if a page's average daily impressions in the second half
+      of the month are lower than the first half, else 0. This is a current-window proxy, not a true future
+      outcome &mdash; a limitation carried through every result in this paper (see Limitations).
+      </p>
+
+      <h3>Features</h3>
+      <p>All features are computed using <strong>only first-half-of-month data</strong>, deliberately excluding
+      any second-half signal (including the raw <code>avg_impr_second_half</code> value the label is built from):</p>
+      <table>
+        <tr><th>Feature</th><th>Why it's knowable at the decision point</th></tr>
+        <tr><td><code>impressions</code></td><td>Observed Search Console signal, first half only</td></tr>
+        <tr><td><code>avg_position</code></td><td>Observed ranking position, first half only</td></tr>
+        <tr><td><code>days_with_impressions</code></td><td>Count of visible days, first half only</td></tr>
+        <tr><td><code>content_age_days</code></td><td>Fixed at publish time, predates the decision entirely</td></tr>
+        <tr><td><code>avg_impr_first_half</code></td><td>By construction, first half only</td></tr>
+        <tr><td><code>ctr</code></td><td>Derived from first-half clicks/impressions only</td></tr>
+      </table>
+
+      <h3>Baseline</h3>
+      <p>
+      A transparent hand-written rule: <code>score = impressions &times; max(0, tier_avg_ctr &minus; page_ctr)</code>,
+      flagging pages with real search volume that under-perform their position tier's expected click-through rate.
+      Two signals behind this rule were checked against real data before use: CTR-by-position-tier
+      (<strong>CONFIRMED</strong> &mdash; CTR falls from 1.24% at top-3 to 0.09% at deep positions, n=11,681&ndash;81,988
+      per tier) and volume-as-a-position-predictor (<strong>MIXED</strong> &mdash; average position does not improve
+      monotonically with impression volume; only the top volume quartile shows a real advantage). The mixed result
+      is treated as a real finding, not a discarded negative: it is why the model uses volume only alongside a
+      real CTR gap, never as a standalone signal.
+      </p>
+
+      <h3>Validation design</h3>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline diagram from raw warehouse data through baseline, model, and validated result">
+          <rect width="720" height="200" fill="none"/>
+          <g font-family="Inter, sans-serif" font-size="12" fill="#16181D">
+            <!-- nodes -->
+            <circle cx="60" cy="100" r="7" fill="#1F3A5F"/>
+            <circle cx="220" cy="60" r="7" fill="#1F3A5F"/>
+            <circle cx="220" cy="140" r="7" fill="#1F3A5F"/>
+            <circle cx="400" cy="100" r="7" fill="#1F3A5F"/>
+            <circle cx="580" cy="60" r="9" fill="#D9A441"/>
+            <circle cx="580" cy="140" r="7" fill="#1F3A5F"/>
+            <!-- lines -->
+            <g stroke="#1F3A5F" stroke-width="1.2" opacity="0.45">
+              <line x1="60" y1="100" x2="220" y2="60"/>
+              <line x1="60" y1="100" x2="220" y2="140"/>
+              <line x1="220" y1="60" x2="400" y2="100"/>
+              <line x1="220" y1="140" x2="400" y2="100"/>
+              <line x1="400" y1="100" x2="580" y2="60"/>
+              <line x1="400" y1="100" x2="580" y2="140"/>
+            </g>
+            <text x="60" y="128" text-anchor="middle">Warehouse</text>
+            <text x="60" y="142" text-anchor="middle">(78.8M rows)</text>
+            <text x="220" y="40" text-anchor="middle">Baseline rule</text>
+            <text x="220" y="168" text-anchor="middle">Random Forest</text>
+            <text x="400" y="128" text-anchor="middle">Client-grouped</text>
+            <text x="400" y="142" text-anchor="middle">held-out split</text>
+            <text x="580" y="40" text-anchor="middle" font-weight="600">Validated result</text>
+            <text x="580" y="168" text-anchor="middle">Naive split (invalid)</text>
+          </g>
+        </svg>
+        <p class="diagram-caption">Both baseline and model are scored on the same client-grouped test split. The naive-split path (bottom right) is shown deliberately &mdash; it produces an invalid, inflated number, documented in this paper rather than discarded.</p>
+      </div>
+      <p>
+      Train/test splitting is <strong>grouped by client</strong> (<code>GroupShuffleSplit</code>, 33 train clients /
+      11 test clients, confirmed zero client overlap) so that no client's pages appear in both train and test.
+      A random, ungrouped split was deliberately also run as a negative control (see Results) to quantify how much
+      a naive split would have overstated performance.
+      </p>
+
+      <h3>Leakage audit</h3>
+      <p>An explicit check confirmed: no product decision flags used as features; no label-derived columns
+      (<code>avg_impr_second_half</code>, <code>is_declining</code>) used as features; every feature restricted to
+      first-half-of-month data, matching the window the label itself is built from. An earlier iteration of this
+      model, before this fix, used full-month features against a half-month label and produced an impossible
+      Precision@50 of 1.0 &mdash; that failure and its fix are documented in the project's notebook history as a
+      worked example of the leakage lesson, not erased from the record.</p>
+    </section>
+
+    <section id="results">
+      <h2>Results</h2>
+      <p>All results below are measured on the same client-grouped held-out test split (14,520 rows, 11 clients never seen during training), evaluated with Precision@50 (of the top 50 ranked pages, how many are actually declining) and Average Precision.</p>
+      <table>
+        <tr><th>Method</th><th>Precision@50</th><th>Average Precision</th></tr>
+        <tr><td>Baseline (CTR-gap rule)</td><td>0.560</td><td>0.561</td></tr>
+        <tr class="highlight-row"><td>Random Forest (validated)</td><td>0.740</td><td>0.608</td></tr>
+        <tr><td>Random Forest, naive ungrouped split <em>(invalid, shown for comparison)</em></td><td>0.940</td><td>&mdash;</td></tr>
+      </table>
+      <div class="warning">
+        <strong>The naive-split gap is itself a finding.</strong>
+        Scoring the identical model on a random (non-client-grouped) split shows 44 overlapping clients between
+        train and test and a Precision@50 of 0.940 &mdash; a 0.200 overstatement versus the honest, client-grouped
+        result. This happens because a random split lets the model partly memorize client-specific patterns rather
+        than learn signal that generalizes to an unseen client. Any number from this project that matters for a
+        real decision uses the grouped-split result (0.740), never the naive one.
+      </div>
+      <h3>What the model leans on</h3>
+      <p>Permutation importance on the validated split ranks <code>content_age_days</code> highest, ahead of the
+      baseline's own core signal (CTR gap). This is reported as a <strong>directional</strong> observation, not a
+      proven causal driver &mdash; it is worth testing on a second month before acting on it broadly, since content
+      age confounds are a known risk in comparisons of this kind.</p>
+      <h3>Action distribution (validated model, test split)</h3>
+      <div class="chart-wrap">
+        <svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart of action counts: monitor 8228, no action needed 6149, review content 143">
+          <g font-family="Inter, sans-serif" font-size="13" fill="#16181D">
+            <!-- bars, max value 8228 scaled to 180px -->
+            <rect x="60" y="220" width="8228" height="0" fill="none"/>
+            <rect x="60" y="220" transform="scale(1,-1) translate(0,-220)" width="140" height="0" fill="none"/>
+            <!-- monitor -->
+            <rect x="80" y="40" width="120" height="180" fill="#1F3A5F" opacity="0.85"/>
+            <text x="140" y="30" text-anchor="middle" font-weight="600">8,228</text>
+            <text x="140" y="238" text-anchor="middle">monitor</text>
+            <!-- no_action_needed -->
+            <rect x="280" y="85.5" width="120" height="134.5" fill="#1F3A5F" opacity="0.5"/>
+            <text x="340" y="76" text-anchor="middle" font-weight="600">6,149</text>
+            <text x="340" y="238" text-anchor="middle">no_action_needed</text>
+            <!-- review_content -->
+            <rect x="480" y="216.9" width="120" height="3.1" fill="#D9A441"/>
+            <text x="540" y="207" text-anchor="middle" font-weight="600">143</text>
+            <text x="540" y="238" text-anchor="middle">review_content</text>
+          </g>
+        </svg>
+      </div>
+      <p style="font-size:13px;color:var(--muted);">Of 14,520 test-set pages: 143 flagged for direct human review, 8,228 for lighter-touch monitoring, 6,149 requiring no action &mdash; a workload shape proportional to a small review team's real capacity, not a flag on every page.</p>
+    </section>
+
+    <section id="limitations">
+      <h2>Limitations &amp; Honest Framing</h2>
+      <ul>
+        <li><strong>Proxy label, not ground truth.</strong> <code>is_declining</code> compares two halves of one
+        month. Neither the baseline nor the model has access to a true future outcome, so a "correct" ranking
+        means "matches this proxy," not "predicts what will actually happen next."</li>
+        <li><strong>Single month, single snapshot.</strong> All results are from March 2026 only. Client mix,
+        seasonality, or platform changes could shift these patterns; nothing here is validated across multiple
+        months.</li>
+        <li><strong>Look-alike patterns not ruled out.</strong> A decline in this proxy could reflect consolidation
+        (a sibling URL absorbing traffic), seasonality, or noise rather than a genuine, fixable content problem
+        &mdash; this study ranks candidates for review, it does not diagnose cause.</li>
+        <li><strong>Unbalanced client history.</strong> Only a subset of clients have 12+ months of history; a
+        single mid-panel month may underrepresent clients who onboarded later in the available window.</li>
+        <li><strong>Not a causal claim.</strong> <code>content_age_days</code> ranking highest in permutation
+        importance is an observed, directional pattern on this split &mdash; not evidence that age causes decline,
+        and not yet tested on a second month.</li>
+      </ul>
+    </section>
+
+    <section id="recommendations">
+      <h2>Ranked Recommendations</h2>
+      <p>Recommendations follow directly from the validated model's output queue, each carrying one reason code and one action label &mdash; never a bundled, ambiguous flag.</p>
+
+      <div class="rec">
+        <div class="num">1</div>
+        <div class="rec-body">
+          <h3>Review the 143 flagged pages first, in ranked order</h3>
+          <p>Highest predicted decline probability, real search volume (&ge;500 impressions). Reason codes: <code>declining_visibility_pattern</code> (majority) or <code>ctr_shortfall_at_position</code> (a smaller, CTR-specific subset).</p>
+          <p class="rec-tag">Human review required before any change &mdash; see checklist below.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="num">2</div>
+        <div class="rec-body">
+          <h3>Light-touch monitor the 8,228 "monitor" pages</h3>
+          <p>Moderate decline probability or lower volume. Not urgent, but worth a lighter recurring check rather than being ignored entirely.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="num">3</div>
+        <div class="rec-body">
+          <h3>No action needed for the remaining 6,149 pages</h3>
+          <p>Low predicted decline probability on this month's evidence &mdash; reviewer time is better spent elsewhere.</p>
+        </div>
+      </div>
+
+      <h3>Before acting on any "review_content" row, a human must check</h3>
+      <ol>
+        <li>Is the page's impression/position history stable (not a brand-new page still settling, not a tracking gap)?</li>
+        <li>Does a manual look rule out consolidation (a sibling URL absorbing traffic) or seasonality?</li>
+        <li>Is <code>content_age_days</code> meaningful here, or could <code>content_created_date</code> be stale or missing?</li>
+      </ol>
+
+      <h3>What must never be automated</h3>
+      <ul>
+        <li>Auto-publishing content changes from this queue &mdash; it ranks review candidates only.</li>
+        <li>Auto-emailing a client that their content is "declining" based on model output alone.</li>
+        <li>Using the ranked order as a performance review of content authorship.</li>
+        <li>Depublishing or removing any page based on a flag alone, without the manual checks above.</li>
+      </ul>
+
+      <h3>Monitoring and retrain triggers</h3>
+      <ul>
+        <li>Retrain monthly as new warehouse partitions become available &mdash; this model is validated on March 2026 only.</li>
+        <li>Retrain if Precision@50 on a fresh month drops below 0.55, meaningfully below the validated 0.740.</li>
+        <li>Re-check after any significant client-mix change (new clients onboarded).</li>
+        <li>Track what fraction of "review_content" flags a human actually confirms as real issues weekly &mdash; a sharp drop signals drift.</li>
+      </ul>
+    </section>
+
+    <section id="reproducibility">
+      <h2>Reproducibility</h2>
+      <p>Every step in this paper traces back to a committed, executed notebook in the project repository:</p>
+      <table>
+        <tr><th>Notebook</th><th>Covers</th></tr>
+        <tr><td><code>work/notebooks/w03_data_contract.ipynb</code></td><td>Unit of analysis, fields, verification queries, data limits</td></tr>
+        <tr><td><code>work/notebooks/w04_baseline_score.ipynb</code></td><td>Signal checks, baseline rule, top-20 manual review</td></tr>
+        <tr><td><code>work/notebooks/w05_model.ipynb</code></td><td>Model training, leakage fix, model-vs-baseline comparison</td></tr>
+        <tr><td><code>work/notebooks/w06_validation_audit.ipynb</code></td><td>Naive-vs-grouped split audit, leakage re-check, safe-language claim rewrite</td></tr>
+        <tr><td><code>work/notebooks/w07_action_playbook.ipynb</code></td><td>Ranked action queue, reason codes, human-review rules, exports</td></tr>
+      </table>
+      <p>Repository: <a href="https://github.com/Muhammad-Ahmed-Zia/flyrank-ml-internship" target="_blank">github.com/Muhammad-Ahmed-Zia/flyrank-ml-internship</a>.
+      Committed metrics receipts live in <code>work/outputs/*.json</code>; the ranked queue CSV is regenerated by the notebook on each run rather than committed, per the project's data-leak guard.</p>
+    </section>
+
+    <footer id="acknowledgments">
+      <h2 style="border:none;padding-top:0;">Acknowledgments &amp; Data Credit</h2>
+      <p>Built on the FlyRank ML Internship dataset &mdash; <a href="https://flyrank.ai" target="_blank">flyrank.ai</a>.</p>
+      <p style="margin-top:20px;">&copy; 2026 Muhammad Ahmed Zia. <a href="#top">Back to top</a></p>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  // Highlight active section in the sticky nav on scroll
+  const sections = document.querySelectorAll('section, footer[id]');
+  const links = document.querySelectorAll('nav.toc a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 80) current = s.getAttribute('id');
+    });
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+    });
+  });
+</script>
+
+</body>
+</html>
